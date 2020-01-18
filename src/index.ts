@@ -280,6 +280,12 @@ export class RuntimeDataType<T> {
 	validate(value: unknown): ValidateError | undefined {
 		return validateDataType(this.dataType, value)
 	}
+	toString() {
+		return dataTypeToString(this.dataType)
+	}
+	toJSON() {
+		return this.dataType
+	}
 }
 
 // Runtime representations of each DataType.

@@ -1,14 +1,26 @@
 {
-	"name": "typescript-boilerplate",
+	"name": "data-type-ts",
 	"version": "0.0.1",
-	"description": "boilerplate for web applications using typescript and webpack",
+	"description": "Durable data types for TypeScript with runtime validators.",
 	"main": "build/src/index.js",
 	"scripts": {
 		"build": "tsc",
 		"watch": "tsc --watch",
-		"test": "tsc && ava build/test/**/*.js -v"
+		"test": "tsc && ava build/test/**/*.js -v",
+		"release": "npm run build && npm version patch && npm publish"
 	},
-	"keywords": [],
+	"keywords": [
+		"runtime",
+		"schema",
+		"jsonschema",
+		"durable",
+		"type",
+		"validate",
+		"validation",
+		"validator",
+		"datatype",
+		"typescript"
+	],
 	"author": "Chet Corcos <ccorcos@gmail.com>",
 	"license": "MIT",
 	"dependencies": {
