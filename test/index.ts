@@ -1,6 +1,9 @@
 import test from "ava"
 import * as dt from "../src/index"
 
+/** Utility for asserting inferred type correctness. */
+type Assert<A extends B, B> = {}
+
 test("null", t => {
 	const d = dt.null_
 	t.is(d.is(null), true)
@@ -8,6 +11,7 @@ test("null", t => {
 	t.is(dt.nullDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "null")
+	type a1 = Assert<typeof d.value, null>
 })
 
 test("undefined", t => {
@@ -17,6 +21,7 @@ test("undefined", t => {
 	t.is(dt.undefinedDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "undefined")
+	type a1 = Assert<typeof d.value, undefined>
 })
 
 test("string", t => {
@@ -26,6 +31,7 @@ test("string", t => {
 	t.is(dt.stringDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "string")
+	type a1 = Assert<typeof d.value, string>
 })
 
 test("number", t => {
@@ -35,6 +41,7 @@ test("number", t => {
 	t.is(dt.numberDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "number")
+	type a1 = Assert<typeof d.value, number>
 })
 
 test("boolean", t => {
@@ -45,6 +52,7 @@ test("boolean", t => {
 	t.is(dt.booleanDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "boolean")
+	type a1 = Assert<typeof d.value, boolean>
 })
 
 test("literal string", t => {
@@ -54,6 +62,7 @@ test("literal string", t => {
 	t.is(dt.literalDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), `"hello"`)
+	type a1 = Assert<typeof d.value, "hello">
 })
 
 test("literal number", t => {
@@ -63,6 +72,7 @@ test("literal number", t => {
 	t.is(dt.literalDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "12")
+	type a1 = Assert<typeof d.value, 12>
 })
 
 test("literal boolean", t => {
@@ -72,6 +82,7 @@ test("literal boolean", t => {
 	t.is(dt.literalDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "true")
+	type a1 = Assert<typeof d.value, true>
 })
 
 test("array", t => {
@@ -82,6 +93,7 @@ test("array", t => {
 	t.is(dt.arrayDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "Array<number>")
+	type a1 = Assert<typeof d.value, Array<number>>
 })
 
 test("tuple", t => {
@@ -93,6 +105,7 @@ test("tuple", t => {
 	t.is(dt.tupleDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "[number, string]")
+	type a1 = Assert<typeof d.value, [number, string]>
 })
 
 test("map", t => {
@@ -103,6 +116,7 @@ test("map", t => {
 	t.is(dt.mapDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "{ [key: string]: number }")
+	type a1 = Assert<typeof d.value, { [key: string]: number }>
 })
 
 test("object", t => {
@@ -122,6 +136,7 @@ test("object", t => {
 	t.is(dt.objectDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "{ a: number; b?: string }")
+	type a1 = Assert<typeof d.value, { a: number; b?: string }>
 })
 
 test("any", t => {
@@ -135,6 +150,7 @@ test("any", t => {
 	t.is(dt.anyDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "any")
+	type a1 = Assert<typeof d.value, any>
 })
 
 test("or simple", t => {
@@ -145,6 +161,7 @@ test("or simple", t => {
 	t.is(dt.orDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "number | string")
+	type a1 = Assert<typeof d.value, number | string>
 })
 
 test("or object", t => {
@@ -171,4 +188,8 @@ test("or object", t => {
 	t.is(dt.orDataType.is(d.dataType), true)
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), `{ type: "loading" } | { type: "ready"; result: number }`)
+	type a1 = Assert<
+		typeof d.value,
+		{ type: "loading" } | { type: "ready"; result: number }
+	>
 })

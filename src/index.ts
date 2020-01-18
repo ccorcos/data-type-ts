@@ -313,8 +313,12 @@ export function array<T>(inner: RuntimeDataType<T>) {
 
 // Apparently there's a special case in TypeScript for mapping over tuples.
 // https://github.com/Microsoft/TypeScript/issues/25947#issuecomment-407930249
-export function tuple<T extends Array<any>>(...values: T) {
-	return new RuntimeDataType<{ [K in keyof T]: RuntimeDataType<T[K]> }>({
+export function tuple<T extends Array<RuntimeDataType<any>>>(...values: T) {
+	return new RuntimeDataType<
+		{
+			[K in keyof T]: T[K] extends RuntimeDataType<any> ? T[K]["value"] : never
+		}
+	>({
 		type: "tuple",
 		values: values.map(value => value.dataType),
 	})
