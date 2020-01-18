@@ -7,7 +7,7 @@
 		"build": "tsc",
 		"watch": "tsc --watch",
 		"test": "tsc && ava build/test/**/*.js -v",
-		"release": "npm run build && npm version patch && npm publish"
+		"release": "rm -rf build && npm run build && npm version patch && npm publish"
 	},
 	"keywords": [
 		"runtime",
