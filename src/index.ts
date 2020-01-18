@@ -1,4 +1,9 @@
-import * as _ from "lodash"
+import compact from "lodash/compact"
+import isEqual from "lodash/isEqual"
+import isString from "lodash/isString"
+import isNumber from "lodash/isNumber"
+import isBoolean from "lodash/isBoolean"
+import isPlainObject_ from "lodash/isPlainObject"
 
 export type NullDataType = { type: "null" }
 
@@ -80,7 +85,7 @@ const isDataTypeMap: IsDataTypeMap = {
 		}
 	},
 	string: (dataType, value) => {
-		if (!_.isString(value)) {
+		if (!isString(value)) {
 			return {
 				error: `${JSON.stringify(value)} is not a string`,
 				path: [],
@@ -88,7 +93,7 @@ const isDataTypeMap: IsDataTypeMap = {
 		}
 	},
 	number: (dataType, value) => {
-		if (!_.isNumber(value)) {
+		if (!isNumber(value)) {
 			return {
 				error: `${JSON.stringify(value)} is not a number`,
 				path: [],
@@ -96,7 +101,7 @@ const isDataTypeMap: IsDataTypeMap = {
 		}
 	},
 	boolean: (dataType, value) => {
-		if (!_.isBoolean(value)) {
+		if (!isBoolean(value)) {
 			return {
 				error: `${JSON.stringify(value)} is not a boolean`,
 				path: [],
@@ -104,7 +109,7 @@ const isDataTypeMap: IsDataTypeMap = {
 		}
 	},
 	literal: (dataType, value) => {
-		if (!_.isEqual(value, dataType.value)) {
+		if (!isEqual(value, dataType.value)) {
 			return {
 				error: `${JSON.stringify(value)} is not literally ${JSON.stringify(
 					dataType.value
@@ -194,7 +199,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	},
 	any: (dataType, value) => undefined,
 	or: (dataType, value) => {
-		const errors = _.compact(
+		const errors = compact(
 			dataType.values.map(possibleDataType => {
 				return validateDataType(possibleDataType, value)
 			})
@@ -505,5 +510,5 @@ dataTypeDataTypeValues.push(
 )
 
 function isPlainObject(obj: unknown): obj is object {
-	return _.isPlainObject(obj)
+	return isPlainObject_(obj)
 }
