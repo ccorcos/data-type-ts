@@ -1,6 +1,6 @@
 {
 	"name": "data-type-ts",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "Durable data types for TypeScript with runtime validators.",
 	"main": "build/src/index.js",
 	"scripts": {
@@ -40,7 +40,7 @@
 		"build/src/*"
 	],
 	"repository": {
-		"type" : "git",
-		"url" : "https://github.com/ccorcos/data-type-ts"
+		"type": "git",
+		"url": "https://github.com/ccorcos/data-type-ts"
 	}
 }
