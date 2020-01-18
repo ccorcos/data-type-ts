@@ -237,22 +237,23 @@ const toStringDataTypeMap: ToStringDataTypeMap = {
 	string: dataType => "string",
 	number: dataType => "number",
 	boolean: dataType => "boolean",
-	literal: dataType => JSON.stringify(dataType.type),
+	literal: dataType => JSON.stringify(dataType.value),
 	array: dataType => "Array<" + dataTypeToString(dataType.inner) + ">",
 	tuple: dataType =>
 		"[" + dataType.values.map(dataTypeToString).join(", ") + "]",
-	map: dataType => "{[key: string]: " + dataTypeToString(dataType.inner) + "}",
+	map: dataType =>
+		"{ [key: string]: " + dataTypeToString(dataType.inner) + " }",
 	object: dataType =>
-		"{" +
+		"{ " +
 		[
 			...Object.keys(dataType.required).map(key => {
 				return key + ": " + dataTypeToString(dataType.required[key])
 			}),
 			...Object.keys(dataType.optional).map(key => {
-				return key + ":? " + dataTypeToString(dataType.required[key])
+				return key + "?: " + dataTypeToString(dataType.optional[key])
 			}),
-		].join(", ") +
-		"}",
+		].join("; ") +
+		" }",
 	any: dataType => "any",
 	or: dataType => dataType.values.map(dataTypeToString).join(" | "),
 }
@@ -278,9 +279,6 @@ export class RuntimeDataType<T> {
 	}
 	validate(value: unknown): ValidateError | undefined {
 		return validateDataType(this.dataType, value)
-	}
-	toJSON() {
-		return this.dataType
 	}
 }
 
