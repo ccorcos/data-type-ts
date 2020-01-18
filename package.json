@@ -21,7 +21,11 @@
 		"datatype",
 		"typescript"
 	],
-	"author": "Chet Corcos <ccorcos@gmail.com>",
+	"author": {
+		"name": "Chet Corcos",
+		"email": "ccorcos@gmail.com",
+		"url": "https://www.chetcorcos.com"
+	},
 	"license": "MIT",
 	"dependencies": {
 		"lodash": "^4.17.15"
@@ -34,5 +38,9 @@
 	},
 	"files": [
 		"build/src/*"
-	]
+	],
+	"repository": {
+		"type" : "git",
+		"url" : "https://github.com/ccorcos/data-type-ts"
+	}
 }
