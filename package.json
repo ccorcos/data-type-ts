@@ -1,6 +1,6 @@
 {
 	"name": "data-type-ts",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Durable data types for TypeScript with runtime validators.",
 	"main": "build/src/index.js",
 	"scripts": {
