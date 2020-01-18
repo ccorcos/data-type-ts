@@ -223,10 +223,6 @@ export function validateDataType<T extends DataType>(
 }
 
 export function dataTypeIs<T extends DataType>(dataType: T, value: unknown) {
-	const is = isDataTypeMap[dataType.type] as (
-		schema: DataType,
-		value: unknown
-	) => { error: string; path: Array<string | number> } | undefined
 	return validateDataType(dataType, value) === undefined
 }
 
@@ -396,32 +392,32 @@ export const dataTypeDataType = new RuntimeDataType<DataType>({
 	values: dataTypeDataTypeValues,
 })
 
-const nullDataType = object({
+export const nullDataType = object({
 	required: { type: literal("null") },
 	optional: {},
 })
 
-const undefinedDataType = object({
+export const undefinedDataType = object({
 	required: { type: literal("undefined") },
 	optional: {},
 })
 
-const stringDataType = object({
+export const stringDataType = object({
 	required: { type: literal("string") },
 	optional: {},
 })
 
-const numberDataType = object({
+export const numberDataType = object({
 	required: { type: literal("number") },
 	optional: {},
 })
 
-const booleanDataType = object({
+export const booleanDataType = object({
 	required: { type: literal("boolean") },
 	optional: {},
 })
 
-const literalDataType = object({
+export const literalDataType = object({
 	required: {
 		type: literal("literal"),
 		value: or(string, number, boolean),
@@ -429,7 +425,7 @@ const literalDataType = object({
 	optional: {},
 })
 
-const arrayDataType = object({
+export const arrayDataType = object({
 	required: {
 		type: literal("array"),
 		inner: dataTypeDataType,
@@ -437,7 +433,7 @@ const arrayDataType = object({
 	optional: {},
 })
 
-const tupleDataType = object({
+export const tupleDataType = object({
 	required: {
 		type: literal("tuple"),
 		values: array(dataTypeDataType),
@@ -445,7 +441,7 @@ const tupleDataType = object({
 	optional: {},
 })
 
-const mapDataType = object({
+export const mapDataType = object({
 	required: {
 		type: literal("map"),
 		inner: dataTypeDataType,
@@ -453,7 +449,7 @@ const mapDataType = object({
 	optional: {},
 })
 
-const objectDataType = object({
+export const objectDataType = object({
 	required: {
 		type: literal("object"),
 		required: map(dataTypeDataType),
@@ -462,9 +458,12 @@ const objectDataType = object({
 	optional: {},
 })
 
-const anyDataType = object({ required: { type: literal("any") }, optional: {} })
+export const anyDataType = object({
+	required: { type: literal("any") },
+	optional: {},
+})
 
-const orDataType = object({
+export const orDataType = object({
 	required: {
 		type: literal("or"),
 		values: array(dataTypeDataType),
@@ -491,7 +490,11 @@ const runtimeDataTypeMap: {
 }
 
 // Type contrained :)
-dataTypeDataTypeValues.push(...Object.values(runtimeDataTypeMap))
+dataTypeDataTypeValues.push(
+	...Object.values(runtimeDataTypeMap).map(
+		runtimeDataType => runtimeDataType.dataType
+	)
+)
 
 function isPlainObject(obj: unknown): obj is object {
 	return _.isPlainObject(obj)
