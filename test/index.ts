@@ -12,6 +12,7 @@ test("null", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "null")
 	type a1 = Assert<typeof d.value, null>
+	t.is(dt.formatError(d.validate(undefined)!), "undefined is not null")
 })
 
 test("undefined", t => {
@@ -22,6 +23,7 @@ test("undefined", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "undefined")
 	type a1 = Assert<typeof d.value, undefined>
+	t.is(dt.formatError(d.validate(null)!), "null is not undefined")
 })
 
 test("string", t => {
@@ -32,6 +34,7 @@ test("string", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "string")
 	type a1 = Assert<typeof d.value, string>
+	t.is(dt.formatError(d.validate(12)!), "12 is not a string")
 })
 
 test("number", t => {
@@ -42,6 +45,7 @@ test("number", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "number")
 	type a1 = Assert<typeof d.value, number>
+	t.is(dt.formatError(d.validate("hello")!), '"hello" is not a number')
 })
 
 test("boolean", t => {
@@ -53,6 +57,7 @@ test("boolean", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "boolean")
 	type a1 = Assert<typeof d.value, boolean>
+	t.is(dt.formatError(d.validate(12)!), "12 is not a boolean")
 })
 
 test("literal string", t => {
@@ -63,6 +68,7 @@ test("literal string", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), `"hello"`)
 	type a1 = Assert<typeof d.value, "hello">
+	t.is(dt.formatError(d.validate("world")!), '"world" is not "hello"')
 })
 
 test("literal number", t => {
@@ -73,6 +79,7 @@ test("literal number", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "12")
 	type a1 = Assert<typeof d.value, 12>
+	t.is(dt.formatError(d.validate(9)!), "9 is not 12")
 })
 
 test("literal boolean", t => {
@@ -83,6 +90,7 @@ test("literal boolean", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "true")
 	type a1 = Assert<typeof d.value, true>
+	t.is(dt.formatError(d.validate(9)!), "9 is not true")
 })
 
 test("array", t => {
@@ -94,6 +102,8 @@ test("array", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "Array<number>")
 	type a1 = Assert<typeof d.value, Array<number>>
+	t.is(dt.formatError(d.validate(9)!), "9 is not an array")
+	t.is(dt.formatError(d.validate(["x"])!), `[0]: "x" is not a number`)
 })
 
 test("tuple", t => {
@@ -106,6 +116,8 @@ test("tuple", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "[number, string]")
 	type a1 = Assert<typeof d.value, [number, string]>
+	t.is(dt.formatError(d.validate(9)!), "9 is not an array")
+	t.is(dt.formatError(d.validate([1, 2])!), `[1]: 2 is not a string`)
 })
 
 test("map", t => {
@@ -117,6 +129,8 @@ test("map", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "{ [key: string]: number }")
 	type a1 = Assert<typeof d.value, { [key: string]: number }>
+	t.is(dt.formatError(d.validate(9)!), "9 is not a map")
+	t.is(dt.formatError(d.validate({ a: "b", b: 1 })!), `.a: "b" is not a number`)
 })
 
 test("object", t => {
@@ -137,6 +151,16 @@ test("object", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "{ a: number; b?: string }")
 	type a1 = Assert<typeof d.value, { a: number; b?: string }>
+	t.is(dt.formatError(d.validate(9)!), "9 is not an object")
+	t.is(dt.formatError(d.validate({})!), ".a: undefined is not a number")
+	t.is(
+		dt.formatError(d.validate({ a: 1, b: 2 })!),
+		[
+			".b: 2 must satisfy one of:",
+			"  2 is not a string",
+			"  2 is not undefined",
+		].join("\n")
+	)
 })
 
 test("any", t => {
@@ -162,6 +186,14 @@ test("or simple", t => {
 	t.is(dt.dataTypeDataType.is(d.dataType), true)
 	t.is(d.toString(), "number | string")
 	type a1 = Assert<typeof d.value, number | string>
+	t.is(
+		dt.formatError(d.validate({})!),
+		[
+			"{} must satisfy one of:",
+			"  {} is not a number",
+			"  {} is not a string",
+		].join("\n")
+	)
 })
 
 test("or object", t => {
@@ -192,4 +224,12 @@ test("or object", t => {
 		typeof d.value,
 		{ type: "loading" } | { type: "ready"; result: number }
 	>
+	t.is(
+		dt.formatError(d.validate({ type: "ready" })!),
+		[
+			`{"type":"ready"} must satisfy one of:`,
+			`  .type: "ready" is not "loading"`,
+			"  .result: undefined is not a number",
+		].join("\n")
+	)
 })

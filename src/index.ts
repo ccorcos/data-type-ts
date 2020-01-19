@@ -54,7 +54,7 @@ export type DataType =
 type DataTypeMap = { [K in DataType["type"]]: Extract<DataType, { type: K }> }
 
 type ValidateError = {
-	error: string
+	message: string
 	path: Array<number | string>
 	children?: Array<ValidateError>
 }
@@ -71,7 +71,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	undefined: (dataType, value) => {
 		if (value !== undefined) {
 			return {
-				error: `${JSON.stringify(value)} is not undefined`,
+				message: `${JSON.stringify(value)} is not undefined`,
 				path: [],
 			}
 		}
@@ -79,7 +79,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	null: (dataType, value) => {
 		if (value !== null) {
 			return {
-				error: `${JSON.stringify(value)} is not null`,
+				message: `${JSON.stringify(value)} is not null`,
 				path: [],
 			}
 		}
@@ -87,7 +87,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	string: (dataType, value) => {
 		if (!isString(value)) {
 			return {
-				error: `${JSON.stringify(value)} is not a string`,
+				message: `${JSON.stringify(value)} is not a string`,
 				path: [],
 			}
 		}
@@ -95,7 +95,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	number: (dataType, value) => {
 		if (!isNumber(value)) {
 			return {
-				error: `${JSON.stringify(value)} is not a number`,
+				message: `${JSON.stringify(value)} is not a number`,
 				path: [],
 			}
 		}
@@ -103,7 +103,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	boolean: (dataType, value) => {
 		if (!isBoolean(value)) {
 			return {
-				error: `${JSON.stringify(value)} is not a boolean`,
+				message: `${JSON.stringify(value)} is not a boolean`,
 				path: [],
 			}
 		}
@@ -111,7 +111,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	literal: (dataType, value) => {
 		if (!isEqual(value, dataType.value)) {
 			return {
-				error: `${JSON.stringify(value)} is not literally ${JSON.stringify(
+				message: `${JSON.stringify(value)} is not ${JSON.stringify(
 					dataType.value
 				)}`,
 				path: [],
@@ -121,7 +121,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	array: (dataType, value) => {
 		if (!Array.isArray(value)) {
 			return {
-				error: `${JSON.stringify(value)} is not a array`,
+				message: `${JSON.stringify(value)} is not an array`,
 				path: [],
 			}
 		}
@@ -138,7 +138,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	tuple: (dataType, value) => {
 		if (!Array.isArray(value)) {
 			return {
-				error: `${JSON.stringify(value)} is not a array`,
+				message: `${JSON.stringify(value)} is not an array`,
 				path: [],
 			}
 		}
@@ -155,7 +155,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	map: (dataType, value) => {
 		if (!isPlainObject(value)) {
 			return {
-				error: `${JSON.stringify(value)} is not a map`,
+				message: `${JSON.stringify(value)} is not a map`,
 				path: [],
 			}
 		}
@@ -172,7 +172,7 @@ const isDataTypeMap: IsDataTypeMap = {
 	object: (dataType, value) => {
 		if (!isPlainObject(value)) {
 			return {
-				error: `${JSON.stringify(value)} is not an object`,
+				message: `${JSON.stringify(value)} is not an object`,
 				path: [],
 			}
 		}
@@ -187,11 +187,44 @@ const isDataTypeMap: IsDataTypeMap = {
 		}
 		for (const key in dataType.optional) {
 			if (key in value && value[key] !== undefined) {
-				const error = validateDataType(dataType.optional[key], value[key])
-				if (error) {
-					return {
-						...error,
-						path: [key, ...error.path],
+				const innerType = dataType.optional[key]
+				if (innerType.type === "or") {
+					if (innerType.values.some(t => t.type === "undefined")) {
+						const error = validateDataType(innerType, value[key])
+						if (error) {
+							return {
+								...error,
+								path: [key, ...error.path],
+							}
+						}
+					} else {
+						const error = validateDataType(
+							{
+								type: "or",
+								values: [...innerType.values, { type: "undefined" }],
+							},
+							value[key]
+						)
+						if (error) {
+							return {
+								...error,
+								path: [key, ...error.path],
+							}
+						}
+					}
+				} else {
+					const error = validateDataType(
+						{
+							type: "or",
+							values: [innerType, { type: "undefined" }],
+						},
+						value[key]
+					)
+					if (error) {
+						return {
+							...error,
+							path: [key, ...error.path],
+						}
 					}
 				}
 			}
@@ -207,7 +240,7 @@ const isDataTypeMap: IsDataTypeMap = {
 		if (errors.length === dataType.values.length) {
 			// TODO: find discriminating keys so we can report just one message.
 			return {
-				error: `${JSON.stringify(value)} does not match one of:`,
+				message: `${JSON.stringify(value)} must satisfy one of:`,
 				path: [],
 				children: errors,
 			}
@@ -223,7 +256,7 @@ export function validateDataType<T extends DataType>(
 	const validate = isDataTypeMap[dataType.type] as (
 		schema: DataType,
 		value: unknown
-	) => { error: string; path: Array<string | number> } | undefined
+	) => ValidateError | undefined
 	return validate(dataType, value)
 }
 
@@ -511,4 +544,36 @@ dataTypeDataTypeValues.push(
 
 function isPlainObject(obj: unknown): obj is object {
 	return isPlainObject_(obj)
+}
+
+function pathToString(path: Array<string | number>) {
+	return path
+		.map(item => {
+			if (isNumber(item)) {
+				return `[${item}]`
+			}
+			if (/^[a-zA-Z][a-zA-Z0-9]*$/.test(item)) {
+				return `.${item}`
+			}
+			return `[${JSON.stringify(item)}]`
+		})
+		.join("")
+}
+
+function indent(str: string) {
+	return "  " + str.split("\n").join("\n  ")
+}
+
+export function formatError(error: ValidateError) {
+	let str = ""
+	if (error.path.length) {
+		str += pathToString(error.path)
+		str += ": "
+	}
+	str += error.message
+	if (error.children) {
+		str += "\n"
+		str += indent(error.children.map(formatError).join("\n"))
+	}
+	return str
 }
