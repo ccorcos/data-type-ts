@@ -312,10 +312,10 @@ export class RuntimeDataType<T> {
 		this.dataType = dataType
 	}
 	/** Convenient wrapper for `isDataType`. */
-	is(value: unknown): value is T {
+	is = (value: unknown): value is T => {
 		return validateDataType(this.dataType, value) === undefined
 	}
-	validate(value: unknown): ValidateError | undefined {
+	validate = (value: unknown): ValidateError | undefined => {
 		return validateDataType(this.dataType, value)
 	}
 	toString() {
