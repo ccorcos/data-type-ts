@@ -163,6 +163,20 @@ test("object", t => {
 	)
 })
 
+test("obj", t => {
+	const a = dt.object({
+		required: {
+			a: dt.number,
+		},
+		optional: {},
+	})
+
+	const b = dt.obj({
+		a: dt.number,
+	})
+	t.deepEqual(a.dataType, b.dataType)
+})
+
 test("any", t => {
 	const d = dt.any
 	t.is(d.is(null), true)

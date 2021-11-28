@@ -419,6 +419,27 @@ export function object<
 	})
 }
 
+/** Just like object() but no optional. */
+export function obj<
+	O extends { [K in keyof RequiredSchema]: RequiredSchema[K]["value"] },
+	// Rip out the required properties
+	RequiredSchema extends { [K: string]: RuntimeDataType<unknown> } = {
+		[K in {
+			[K in keyof O]: Pick<O, K> extends Required<Pick<O, K>> ? K : never
+		}[keyof O]]: RuntimeDataType<O[K]>
+	}
+>(schema: RequiredSchema) {
+	const required: { [key: string]: DataType } = {}
+	for (const key in schema) {
+		required[key] = schema[key].dataType
+	}
+	return new RuntimeDataType<{ [K in keyof O]: O[K] }>({
+		type: "object",
+		required: required,
+		optional: {},
+	})
+}
+
 export const any = new RuntimeDataType<any>({ type: "any" })
 
 export function or<T extends Array<RuntimeDataType<any>>>(...values: T) {
