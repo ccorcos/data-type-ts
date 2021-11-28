@@ -1,9 +1,9 @@
 import compact from "lodash/compact"
-import isEqual from "lodash/isEqual"
-import isString from "lodash/isString"
-import isNumber from "lodash/isNumber"
 import isBoolean from "lodash/isBoolean"
+import isEqual from "lodash/isEqual"
+import isNumber from "lodash/isNumber"
 import isPlainObject_ from "lodash/isPlainObject"
+import isString from "lodash/isString"
 
 export type NullDataType = { type: "null" }
 
@@ -352,11 +352,9 @@ export function array<T>(inner: RuntimeDataType<T>) {
 // Apparently there's a special case in TypeScript for mapping over tuples.
 // https://github.com/Microsoft/TypeScript/issues/25947#issuecomment-407930249
 export function tuple<T extends Array<RuntimeDataType<any>>>(...values: T) {
-	return new RuntimeDataType<
-		{
-			[K in keyof T]: T[K] extends RuntimeDataType<any> ? T[K]["value"] : never
-		}
-	>({
+	return new RuntimeDataType<{
+		[K in keyof T]: T[K] extends RuntimeDataType<any> ? T[K]["value"] : never
+	}>({
 		type: "tuple",
 		values: values.map(value => value.dataType),
 	})
@@ -370,8 +368,9 @@ export function map<T>(inner: RuntimeDataType<T>) {
 }
 
 export function object<
-	O extends { [K in keyof RequiredSchema]: RequiredSchema[K]["value"] } &
-		{ [K in keyof OptionalSchema]?: OptionalSchema[K]["value"] },
+	O extends { [K in keyof RequiredSchema]: RequiredSchema[K]["value"] } & {
+		[K in keyof OptionalSchema]?: OptionalSchema[K]["value"]
+	},
 	// Rip out the required properties
 	RequiredSchema extends { [K: string]: RuntimeDataType<unknown> } = {
 		[K in {
