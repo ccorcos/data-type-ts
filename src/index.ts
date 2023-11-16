@@ -382,7 +382,7 @@ export function object<
 		[K in {
 			[K in keyof O]: Partial<Pick<O, K>> extends Pick<O, K> ? K : never
 		}[keyof O]]: RuntimeDataType<O[K]>
-	}
+	},
 >(args: { required: RequiredSchema; optional: OptionalSchema }) {
 	const required: { [key: string]: DataType } = {}
 	const optional: { [key: string]: DataType } = {}
@@ -427,7 +427,7 @@ export function obj<
 		[K in {
 			[K in keyof O]: Pick<O, K> extends Required<Pick<O, K>> ? K : never
 		}[keyof O]]: RuntimeDataType<O[K]>
-	}
+	},
 >(schema: RequiredSchema) {
 	const required: { [key: string]: DataType } = {}
 	for (const key in schema) {
