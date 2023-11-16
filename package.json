@@ -1,12 +1,12 @@
 {
 	"name": "data-type-ts",
 	"version": "0.0.8",
-	"description": "Durable data types for TypeScript with runtime validators.",
+	"description": "Runtime typed data validation for TypeScript.",
 	"main": "build/src/index.js",
 	"scripts": {
 		"build": "tsc",
 		"watch": "tsc --watch",
-		"test": "ava test/**/*.ts -v",
+		"test": "mocha -r tsx './src/**/*.test.ts' --verbose",
 		"release": "rm -rf build && npm run build && npm version patch && npm publish"
 	},
 	"keywords": [
@@ -34,8 +34,9 @@
 	},
 	"devDependencies": {
 		"@types/lodash": "^4.14.182",
+		"@types/mocha": "whitecolor/mocha-types",
 		"@types/node": "^18.6.1",
-		"ava": "^4.3.1",
+		"mocha": "^10.2.0",
 		"tsx": "^3.14.0",
 		"typescript": "^4.7.4"
 	},
@@ -45,13 +46,5 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/ccorcos/data-type-ts"
-	},
-	"ava": {
-		"extensions": {
-			"ts": "module"
-		},
-		"nodeArguments": [
-			"--loader=tsx"
-		]
 	}
 }
