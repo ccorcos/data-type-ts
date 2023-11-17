@@ -104,34 +104,50 @@ There are two gotchas with this approach though:
 
 ## Custom Types
 
-This library is only meant to support the most basic JSON types. But you can extend this for your own validators as well.
+This library only supports the most basic JSON types but you can extend it with your own custom validators:
+
+```ts
+function range(min: number, max: number) {
+	return new t.Validator<number>({
+		validate: value =>
+			t.number.validate(value) || value < min
+				? { message: `${value} is less than ${min}`, path: [] }
+				: value > max
+				? { message: `${value} is greater than ${max}`, path: [] }
+				: undefined,
+		inspect: () => `${min} >= number >= ${max}`,
+	})
+}
+
+const d = range(0, 10)
+```
 
 ```ts
 import * as emailValidator from "email-validator"
 
-export const email = new Validator<string>({
-	validate: value => {
-		const invalidString = string.validate(value)
-		if (invalidString) return invalidString
-
-		const validEmail = emailValidator.validate(email)
-		if (!validEmail)
-			return {
-				message: `${JSON.stringify(value)} is not valid email`,
-				path: [],
-			}
-	},
+export const email = new t.Validator<string>({
+	validate: value =>
+		t.string.validate(value) || !emailValidator.validate(email)
+			? { message: `${JSON.stringify(value)} is not valid email` }
+			: undefined,
 	inspect: () => "Email",
 })
 ```
 
-## Using for Validation only
-
-Personally, I find it kind of gross to construct types using a runtime wrapper like this. Not to mention, there's all kinds of basic validation that you might want to keep our of your types to keep them clean.
-
-So if you're just using for validation, you can pass the types into your schema in order to assert that your schema conforms to the type.
+Note that the inspect argument is helpful when debugging.
 
 ```ts
 
+const schema = t.object({
+	id: t.string,
+	email: email,
+	score: range(0, 10)
+})
 
+console.log(schema.toString())
+// {
+// 	id: string,
+// 	email: Email
+// 	score: 0 >= number >= 10
+// }
 ```

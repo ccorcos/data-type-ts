@@ -8,7 +8,7 @@ import isString from "lodash/isString"
 
 export type ValidateError = {
 	message: string
-	path: Array<number | string>
+	path?: Array<number | string>
 	children?: Array<ValidateError>
 }
 
@@ -50,7 +50,6 @@ export const undefined_ = new Validator<undefined>({
 		if (value !== undefined) {
 			return {
 				message: `${JSON.stringify(value)} is not undefined`,
-				path: [],
 			}
 		}
 	},
@@ -62,7 +61,6 @@ export const null_ = new Validator<null>({
 		if (value !== null) {
 			return {
 				message: `${JSON.stringify(value)} is not null`,
-				path: [],
 			}
 		}
 	},
@@ -74,7 +72,6 @@ export const string = new Validator<string>({
 		if (!isString(value)) {
 			return {
 				message: `${JSON.stringify(value)} is not a string`,
-				path: [],
 			}
 		}
 	},
@@ -86,7 +83,6 @@ export const number = new Validator<number>({
 		if (!isNumber(value)) {
 			return {
 				message: `${JSON.stringify(value)} is not a number`,
-				path: [],
 			}
 		}
 	},
@@ -98,7 +94,6 @@ export const boolean = new Validator<boolean>({
 		if (!isBoolean(value)) {
 			return {
 				message: `${JSON.stringify(value)} is not a boolean`,
-				path: [],
 			}
 		}
 	},
@@ -111,7 +106,6 @@ export function literal<T extends string | number | boolean>(inner: T) {
 			if (!isEqual(value, inner)) {
 				return {
 					message: `${JSON.stringify(value)} is not ${JSON.stringify(inner)}`,
-					path: [],
 				}
 			}
 		},
@@ -123,18 +117,12 @@ export function array<T>(inner: Validator<T>) {
 	return new Validator<Array<T>>({
 		validate: value => {
 			if (!Array.isArray(value)) {
-				return {
-					message: `${JSON.stringify(value)} is not an array`,
-					path: [],
-				}
+				return { message: `${JSON.stringify(value)} is not an array` }
 			}
 			for (let i = 0; i < value.length; i++) {
 				const error = inner.validate(value[i])
 				if (error) {
-					return {
-						...error,
-						path: [i, ...error.path],
-					}
+					return { ...error, path: [i, ...(error.path || [])] }
 				}
 			}
 		},
@@ -152,18 +140,12 @@ export function tuple<T extends Array<any>>(
 	return new Validator<T>({
 		validate: value => {
 			if (!Array.isArray(value)) {
-				return {
-					message: `${JSON.stringify(value)} is not an array`,
-					path: [],
-				}
+				return { message: `${JSON.stringify(value)} is not an array` }
 			}
 			for (let i = 0; i < values.length; i++) {
 				const error = values[i].validate(value[i])
 				if (error) {
-					return {
-						...error,
-						path: [i, ...error.path],
-					}
+					return { ...error, path: [i, ...(error.path || [])] }
 				}
 			}
 		},
@@ -175,18 +157,12 @@ export function map<T>(inner: Validator<T>): Validator<{ [key: string]: T }> {
 	return new Validator<{ [key: string]: T }>({
 		validate: value => {
 			if (!isPlainObject(value)) {
-				return {
-					message: `${JSON.stringify(value)} is not a map`,
-					path: [],
-				}
+				return { message: `${JSON.stringify(value)} is not a map` }
 			}
 			for (const key in value) {
 				const error = inner.validate(value[key])
 				if (error) {
-					return {
-						...error,
-						path: [key, ...error.path],
-					}
+					return { ...error, path: [key, ...(error.path || [])] }
 				}
 			}
 		},
@@ -248,10 +224,7 @@ export function object<
 	>({
 		validate: value => {
 			if (!isPlainObject(value)) {
-				return {
-					message: `${JSON.stringify(value)} is not an object`,
-					path: [],
-				}
+				return { message: `${JSON.stringify(value)} is not an object` }
 			}
 			for (const key in args) {
 				const validator = args[key]
@@ -267,10 +240,7 @@ export function object<
 
 				const error = validator.validate(value[key as any])
 				if (error) {
-					return {
-						...error,
-						path: [key, ...error.path],
-					}
+					return { ...error, path: [key, ...(error.path || [])] }
 				}
 			}
 
@@ -281,7 +251,6 @@ export function object<
 						message: `${JSON.stringify(value)} contains extra keys: ${extras
 							.map(k => JSON.stringify(k))
 							.join(", ")}`,
-						path: [],
 					}
 				}
 			}
@@ -317,7 +286,7 @@ export function union<T extends Validator<any>[]>(...values: T) {
 				// TODO: find discriminating keys so we can report just one message.
 				return {
 					message: `${JSON.stringify(value)} must satisfy one of:`,
-					path: [],
+
 					children: errors,
 				}
 			}
@@ -350,7 +319,7 @@ function indent(str: string) {
 
 export function formatError(error: ValidateError) {
 	let str = ""
-	if (error.path.length) {
+	if (error.path?.length) {
 		str += pathToString(error.path)
 		str += ": "
 	}

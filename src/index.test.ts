@@ -339,6 +339,34 @@ describe("data-type-ts", () => {
 		)
 	})
 
+	describe("Custom types", () => {
+		it("number range", () => {
+			function range(min: number, max: number) {
+				return new t.Validator<number>({
+					validate: value =>
+						t.number.validate(value) || value < min
+							? { message: `${value} is less than ${min}`, path: [] }
+							: value > max
+							? { message: `${value} is greater than ${max}`, path: [] }
+							: undefined,
+					inspect: () => `${min} >= number >= ${max}`,
+				})
+			}
+
+			const d = range(0, 10)
+			assert.equal(d.is(0), true)
+			assert.equal(d.is(5), true)
+			assert.equal(d.is(10), true)
+			assert.equal(d.is(-1), false)
+			assert.equal(d.is(11), false)
+
+			assert.equal(d.toString(), `0 >= number >= 10`)
+			type a1 = Assert<typeof d.value, number>
+
+			assert.equal(t.formatError(d.validate(12)!), "12 is greater than 10")
+		})
+	})
+
 	describe("README", () => {
 		it("Infers", () => {
 			// Type interence:
