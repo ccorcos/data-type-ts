@@ -11,7 +11,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is(null), true)
 		assert.equal(d.is(undefined), false)
 		assert.equal(d.toString(), "null")
-		type a1 = Assert<typeof d.value, null>
+		type a1 = Assert<t.Infer<typeof d>, null>
 		assert.equal(t.formatError(d.validate(undefined)!), "undefined is not null")
 	})
 
@@ -20,7 +20,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is(undefined), true)
 		assert.equal(d.is(null), false)
 		assert.equal(d.toString(), "undefined")
-		type a1 = Assert<typeof d.value, undefined>
+		type a1 = Assert<t.Infer<typeof d>, undefined>
 		assert.equal(t.formatError(d.validate(null)!), "null is not undefined")
 	})
 
@@ -29,7 +29,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is("asf"), true)
 		assert.equal(d.is(12), false)
 		assert.equal(d.toString(), "string")
-		type a1 = Assert<typeof d.value, string>
+		type a1 = Assert<t.Infer<typeof d>, string>
 		assert.equal(t.formatError(d.validate(12)!), "12 is not a string")
 	})
 
@@ -38,7 +38,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is(12), true)
 		assert.equal(d.is("asdf"), false)
 		assert.equal(d.toString(), "number")
-		type a1 = Assert<typeof d.value, number>
+		type a1 = Assert<t.Infer<typeof d>, number>
 		assert.equal(t.formatError(d.validate("hello")!), '"hello" is not a number')
 	})
 
@@ -48,7 +48,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is(false), true)
 		assert.equal(d.is(undefined), false)
 		assert.equal(d.toString(), "boolean")
-		type a1 = Assert<typeof d.value, boolean>
+		type a1 = Assert<t.Infer<typeof d>, boolean>
 		assert.equal(t.formatError(d.validate(12)!), "12 is not a boolean")
 	})
 
@@ -58,7 +58,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is("world"), false)
 		assert.equal(d.toString(), `"hello"`)
 
-		type a1 = Assert<typeof d.value, "hello"> // Infers
+		type a1 = Assert<t.Infer<typeof d>, "hello"> // Infers
 		// @ts-expect-error
 		t.literal<"hello">("world") // Conforms
 
@@ -70,7 +70,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is(12), true)
 		assert.equal(d.is(13), false)
 		assert.equal(d.toString(), "12")
-		type a1 = Assert<typeof d.value, 12> // Infers
+		type a1 = Assert<t.Infer<typeof d>, 12> // Infers
 		// @ts-expect-error
 		t.literal<12>(13) // Conforms
 		assert.equal(t.formatError(d.validate(9)!), "9 is not 12")
@@ -81,7 +81,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is(true), true)
 		assert.equal(d.is(false), false)
 		assert.equal(d.toString(), "true")
-		type a1 = Assert<typeof d.value, true> // Infers
+		type a1 = Assert<t.Infer<typeof d>, true> // Infers
 		// @ts-expect-error
 		t.literal<true>(false) // Conforms
 		assert.equal(t.formatError(d.validate(9)!), "9 is not true")
@@ -94,7 +94,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is([1, 2, "12"]), false)
 		assert.equal(d.toString(), "Array<number>")
 
-		type a1 = Assert<typeof d.value, Array<number>> // Infers
+		type a1 = Assert<t.Infer<typeof d>, Array<number>> // Infers
 		// Conforms
 		// @ts-expect-error
 		const v1: t.Validator<number[]> = t.array(t.string)
@@ -116,7 +116,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is(["hello"]), false)
 		assert.equal(d.toString(), "[number, string]")
 
-		type a1 = Assert<typeof d.value, [number, string]> // Infers
+		type a1 = Assert<t.Infer<typeof d>, [number, string]> // Infers
 		// @ts-expect-error
 		t.tuple<[string, string]>(t.number, t.string) // Conforms
 
@@ -130,7 +130,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is({}), true)
 		assert.equal(d.is({ a: 1, b: "hello" }), false)
 		assert.equal(d.toString(), "{ [key: string]: number }")
-		type a1 = Assert<typeof d.value, { [key: string]: number }> // Infers
+		type a1 = Assert<t.Infer<typeof d>, { [key: string]: number }> // Infers
 
 		// Conforms
 		// @ts-expect-error
@@ -178,7 +178,7 @@ describe("data-type-ts", () => {
 			"{ id: string; name: string | undefined; age:? Array<number> | undefined }"
 		)
 
-		type a1 = Assert<typeof d.value, User> // Infers
+		type a1 = Assert<t.Infer<typeof d>, User> // Infers
 
 		// Conforms
 		const v1: t.Validator<User> = t.object({
@@ -270,7 +270,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is([]), true)
 		assert.equal(d.toString(), "any")
 
-		type a1 = Assert<typeof d.value, any>
+		type a1 = Assert<t.Infer<typeof d>, any>
 		const v1: t.Validator<any> = t.any
 		// NOTE: this is a weird exception here about any...
 		const v2: t.Validator<any> = t.number
@@ -283,7 +283,7 @@ describe("data-type-ts", () => {
 		assert.equal(d.is({}), false)
 		assert.equal(d.toString(), "number | string")
 
-		type a1 = Assert<typeof d.value, number | string> // Infers
+		type a1 = Assert<t.Infer<typeof d>, number | string> // Infers
 
 		// Conforms
 		const v1: t.Validator<string | number> = t.union(t.number, t.string)
@@ -326,7 +326,7 @@ describe("data-type-ts", () => {
 			`{ type: "loading" } | { type: "ready"; result: number }`
 		)
 		type a1 = Assert<
-			typeof d.value,
+			t.Infer<typeof d>,
 			{ type: "loading" } | { type: "ready"; result: number }
 		>
 		assert.equal(
@@ -361,7 +361,7 @@ describe("data-type-ts", () => {
 			assert.equal(d.is(11), false)
 
 			assert.equal(d.toString(), `0 >= number >= 10`)
-			type a1 = Assert<typeof d.value, number>
+			type a1 = Assert<t.Infer<typeof d>, number>
 
 			assert.equal(t.formatError(d.validate(12)!), "12 is greater than 10")
 		})
@@ -379,7 +379,7 @@ describe("data-type-ts", () => {
 				age: t.optional(t.number),
 			})
 
-			type Schema = (typeof schema)["value"]
+			type Schema = t.Infer<typeof schema>
 			// type Schema = {
 			// 	id: string
 			// 	role: "admin" | "member"

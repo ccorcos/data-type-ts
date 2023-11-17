@@ -31,7 +31,6 @@ export class Validator<T> implements ValidatorFn<T> {
 		this._validate = args.validate
 		this.inspect = args.inspect
 	}
-	public value: T
 	public _validate: (value: T) => ValidateError | undefined
 	public validate: (value: unknown) => ValidateError | undefined
 	public inspect: () => string
@@ -208,6 +207,8 @@ type OptionalValidatorKeys<T> = {
 
 type RequiredValidatorKeys<T> = Exclude<keyof T, OptionalValidatorKeys<T>>
 
+export type Infer<T extends Validator<any>> = Parameters<T["_validate"]>[0]
+
 export function object<
 	T extends {
 		[K: string]: Validator<any> | Optional<any>
@@ -216,9 +217,9 @@ export function object<
 	return new Validator<
 		Simplify<
 			{
-				[K in RequiredValidatorKeys<T>]: T[K]["value"]
+				[K in RequiredValidatorKeys<T>]: Infer<T[K]>
 			} & {
-				[K in OptionalValidatorKeys<T>]?: T[K]["value"]
+				[K in OptionalValidatorKeys<T>]?: Infer<T[K]>
 			}
 		>
 	>({
@@ -275,7 +276,7 @@ export const any = new Validator<any>({
 
 /** This is the only one that doesn't infer well. Generic type is an array. */
 export function union<T extends Validator<any>[]>(...values: T) {
-	return new Validator<T[number]["value"]>({
+	return new Validator<Infer<T[number]>>({
 		validate: value => {
 			const errors = compact(
 				values.map(possibleValidator => {

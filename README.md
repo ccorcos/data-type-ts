@@ -18,7 +18,7 @@ const schema = t.object({
 	age: t.optional(t.number),
 })
 
-type Schema = (typeof schema)["value"]
+type Schema = t.Infer<typeof schema>
 // type Schema = {
 // 	id: string
 // 	role: "admin" | "member"
