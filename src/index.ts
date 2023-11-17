@@ -12,15 +12,27 @@ export type ValidateError = {
 	children?: Array<ValidateError>
 }
 
-export class Validator<T> {
+type ValidatorFn<T> = {
+	/**
+	 * Intentionally value:T and then using implements so that this type isn't bivariant.
+	 * That means that `const x: Validator<string | number> = new Validator<string> wouldn't work.
+	 * However, without this "function" vs a "method" here and using implements, then the above would work.
+	 * Just as you can assign `const x: (number | string)[] = [1,2,3]` because Array prototype methods are bivariant.
+	 */
+	_validate: (value: T) => ValidateError | undefined
+}
+
+export class Validator<T> implements ValidatorFn<T> {
 	constructor(args: {
 		validate: (value: T) => ValidateError | undefined
 		inspect: () => string
 	}) {
 		this.validate = args.validate as any
+		this._validate = args.validate
 		this.inspect = args.inspect
 	}
 	public value: T
+	public _validate: (value: T) => ValidateError | undefined
 	public validate: (value: unknown) => ValidateError | undefined
 	public inspect: () => string
 
@@ -159,7 +171,7 @@ export function tuple<T extends Array<any>>(
 	})
 }
 
-export function map<T>(inner: Validator<T>) {
+export function map<T>(inner: Validator<T>): Validator<{ [key: string]: T }> {
 	return new Validator<{ [key: string]: T }>({
 		validate: value => {
 			if (!isPlainObject(value)) {
@@ -182,13 +194,58 @@ export function map<T>(inner: Validator<T>) {
 	})
 }
 
-export function object<T extends object>(
-	args: {
-		[K in keyof Required<T>]: Validator<T[K]>
+type Assert<A extends B, B> = {}
+
+type OptionalKeys<T> = {
+	[K in keyof T]-?: undefined extends T[K]
+		? {} extends { [P in K]: T[K] }
+			? K
+			: never
+		: never
+}[keyof T]
+type A1 = Assert<OptionalKeys<{ a: number | undefined; b?: string[] }>, "b">
+
+type RequiredKeys<T> = Exclude<keyof Required<T>, OptionalKeys<T>>
+type A2 = Assert<RequiredKeys<{ a: number | undefined; b?: string[] }>, "a">
+
+type Simplify<T> = { [K in keyof T]: T[K] }
+
+class Optional<T> extends Validator<T> {
+	optional = true
+	constructor(inner: Validator<T>) {
+		const x = union(inner, undefined_)
+		super({
+			validate: value => x.validate(value),
+			inspect: () => x.inspect(),
+		})
+	}
+}
+
+export function optional<T>(value: Validator<T>) {
+	// return union(value, undefined_) as Optional<T>
+	return new Optional(value)
+}
+
+type OptionalValidatorKeys<T> = {
+	[K in keyof T]: T[K] extends Optional<any> ? K : never
+}[keyof T]
+
+type RequiredValidatorKeys<T> = Exclude<keyof T, OptionalValidatorKeys<T>>
+
+export function object<
+	T extends {
+		[K: string]: Validator<any> | Optional<any>
 	},
-	strict = false
-) {
-	return new Validator<T>({
+>(args: T, strict = false) {
+	return new Validator<
+		Simplify<
+			{
+				[K in RequiredValidatorKeys<T>]: T[K]["value"]
+			} & {
+				[K in OptionalValidatorKeys<T>]?: T[K]["value"]
+			}
+		>
+	>({
 		validate: value => {
 			if (!isPlainObject(value)) {
 				return {
@@ -197,7 +254,18 @@ export function object<T extends object>(
 				}
 			}
 			for (const key in args) {
-				const error = args[key].validate(value[key])
+				const validator = args[key]
+				const isOptional = "optional" in validator
+				if (!(key in value) && strict && !isOptional) {
+					return {
+						message: `${JSON.stringify(key)} is missing from ${JSON.stringify(
+							value
+						)}`,
+						path: [key],
+					}
+				}
+
+				const error = validator.validate(value[key as any])
 				if (error) {
 					return {
 						...error,
@@ -222,7 +290,9 @@ export function object<T extends object>(
 			"{ " +
 			[
 				...Object.keys(args).map(key => {
-					return key + ": " + args[key].inspect()
+					const inner = args[key]
+					if ("optional" in inner) return key + ":? " + args[key].inspect()
+					else return key + ": " + args[key].inspect()
 				}),
 			].join("; ") +
 			" }",
@@ -254,10 +324,6 @@ export function union<T extends Validator<any>[]>(...values: T) {
 		},
 		inspect: () => values.map(v => v.inspect()).join(" | "),
 	})
-}
-
-export function optional<T>(value: Validator<T>) {
-	return union(value, undefined_)
 }
 
 function isPlainObject(obj: unknown): obj is object {

@@ -63,7 +63,11 @@ describe("data-type-ts", () => {
 		assert.equal(d.is("hello"), true)
 		assert.equal(d.is("world"), false)
 		assert.equal(d.toString(), `"hello"`)
-		type a1 = Assert<typeof d.value, "hello">
+
+		type a1 = Assert<typeof d.value, "hello"> // Infers
+		// @ts-expect-error
+		dt.literal<"hello">("world") // Conforms
+
 		assert.equal(dt.formatError(d.validate("world")!), '"world" is not "hello"')
 	})
 
@@ -72,7 +76,9 @@ describe("data-type-ts", () => {
 		assert.equal(d.is(12), true)
 		assert.equal(d.is(13), false)
 		assert.equal(d.toString(), "12")
-		type a1 = Assert<typeof d.value, 12>
+		type a1 = Assert<typeof d.value, 12> // Infers
+		// @ts-expect-error
+		dt.literal<12>(13) // Conforms
 		assert.equal(dt.formatError(d.validate(9)!), "9 is not 12")
 	})
 
@@ -81,7 +87,9 @@ describe("data-type-ts", () => {
 		assert.equal(d.is(true), true)
 		assert.equal(d.is(false), false)
 		assert.equal(d.toString(), "true")
-		type a1 = Assert<typeof d.value, true>
+		type a1 = Assert<typeof d.value, true> // Infers
+		// @ts-expect-error
+		dt.literal<true>(false) // Conforms
 		assert.equal(dt.formatError(d.validate(9)!), "9 is not true")
 	})
 
@@ -91,7 +99,17 @@ describe("data-type-ts", () => {
 		assert.equal(d.is([]), true)
 		assert.equal(d.is([1, 2, "12"]), false)
 		assert.equal(d.toString(), "Array<number>")
-		type a1 = Assert<typeof d.value, Array<number>>
+
+		type a1 = Assert<typeof d.value, Array<number>> // Infers
+		// Conforms
+		// @ts-expect-error
+		const v1: dt.Validator<number[]> = dt.array(dt.string)
+		// @ts-expect-error
+		const v2: dt.Validator<(string | number)[]> = dt.array(dt.string)
+		const v3: dt.Validator<(string | number)[]> = dt.array(
+			dt.union(dt.string, dt.number)
+		)
+
 		assert.equal(dt.formatError(d.validate(9)!), "9 is not an array")
 		assert.equal(dt.formatError(d.validate(["x"])!), `[0]: "x" is not a number`)
 	})
@@ -103,7 +121,11 @@ describe("data-type-ts", () => {
 		assert.equal(d.is([1]), false)
 		assert.equal(d.is(["hello"]), false)
 		assert.equal(d.toString(), "[number, string]")
-		type a1 = Assert<typeof d.value, [number, string]>
+
+		type a1 = Assert<typeof d.value, [number, string]> // Infers
+		// @ts-expect-error
+		dt.tuple<[string, string]>(dt.number, dt.string) // Conforms
+
 		assert.equal(dt.formatError(d.validate(9)!), "9 is not an array")
 		assert.equal(dt.formatError(d.validate([1, 2])!), `[1]: 2 is not a string`)
 	})
@@ -114,7 +136,20 @@ describe("data-type-ts", () => {
 		assert.equal(d.is({}), true)
 		assert.equal(d.is({ a: 1, b: "hello" }), false)
 		assert.equal(d.toString(), "{ [key: string]: number }")
-		type a1 = Assert<typeof d.value, { [key: string]: number }>
+		type a1 = Assert<typeof d.value, { [key: string]: number }> // Infers
+
+		// Conforms
+		// @ts-expect-error
+		const v: dt.Validator<{ [key: string]: number | string }> = dt.map(
+			dt.number
+		)
+		const v2: dt.Validator<{ [key: string]: number | string }> = dt.map(
+			dt.union(dt.number, dt.string)
+		)
+		// @ts-expect-error
+		const v3: dt.Validator<{ [key: string]: number | string }> = dt.map(
+			dt.union(dt.number, dt.string, dt.boolean)
+		)
 		assert.equal(dt.formatError(d.validate(9)!), "9 is not a map")
 		assert.equal(
 			dt.formatError(d.validate({ a: "b", b: 1 })!),
@@ -123,48 +158,106 @@ describe("data-type-ts", () => {
 	})
 
 	it("object", () => {
+		type User = {
+			id: string
+			name: string | undefined
+			age?: number[]
+		}
+
 		const d = dt.object({
-			a: dt.number,
-			b: dt.optional(dt.string),
+			id: dt.string,
+			name: dt.union(dt.string, dt.undefined_),
+			age: dt.optional(dt.array(dt.number)),
 		})
-		assert.equal(d.is({ a: 1 }), true)
-		assert.equal(d.is({ a: 1, b: "hello" }), true)
-		assert.equal(d.is({ a: 1, b: "hello", c: "ignore" }), true)
+
+		assert.equal(d.is({ id: "1" }), true) // Works because not strict.
+		assert.equal(d.is({ id: "1", name: "c" }), true)
+		assert.equal(d.is({ id: "1", name: undefined }), true)
+		assert.equal(d.is({ id: "1", name: undefined, age: [] }), true)
+		assert.equal(d.is({ id: "1", name: undefined, age: undefined }), true)
+		assert.equal(d.is({ id: "1", name: "hello", age: [12, 23] }), true)
+		assert.equal(d.is({ id: "1", name: "hello", c: "ignore" }), true)
+
 		assert.equal(d.is({}), false)
-		assert.equal(d.is({ a: 1, b: 2 }), false)
-		// assert.equal(d.toString(), "{ a: number; b?: string }")
-		assert.equal(d.toString(), "{ a: number; b: string | undefined }")
-		type a1 = Assert<typeof d.value, { a: number; b?: string }>
+		assert.equal(d.is({ id: "1", name: 2 }), false)
+
+		assert.equal(
+			d.toString(),
+			"{ id: string; name: string | undefined; age:? Array<number> | undefined }"
+		)
+
+		type a1 = Assert<typeof d.value, User> // Infers
+
+		// Conforms
+		const v1: dt.Validator<User> = dt.object({
+			id: dt.string,
+			name: dt.union(dt.string, dt.undefined_),
+			age: dt.optional(dt.array(dt.number)),
+		})
+
+		// @ts-expect-error
+		const v2: dt.Validator<User> = dt.object({
+			id: dt.string,
+			name: dt.union(dt.string, dt.undefined_),
+			age: dt.union(dt.array(dt.number)),
+		})
+
+		// @ts-expect-error
+		const v3: dt.Validator<User> = dt.object({
+			id: dt.string,
+			name: dt.optional(dt.string),
+			age: dt.optional(dt.array(dt.number)),
+		})
+
 		assert.equal(dt.formatError(d.validate(9)!), "9 is not an object")
 		assert.equal(
 			dt.formatError(d.validate({})!),
-			".a: undefined is not a number"
+			".id: undefined is not a string"
 		)
 		assert.equal(
-			dt.formatError(d.validate({ a: 1, b: 2 })!),
+			dt.formatError(d.validate({ id: "1", name: 2 })!),
 			[
-				".b: 2 must satisfy one of:",
+				".name: 2 must satisfy one of:",
 				"  2 is not a string",
 				"  2 is not undefined",
 			].join("\n")
 		)
 	})
 
-	it("object strict", () => {
+	it.only("object strict", () => {
+		type User = {
+			id: string
+			name: string | undefined
+			age?: number[]
+		}
+
 		const d = dt.object(
 			{
-				a: dt.number,
-				b: dt.optional(dt.string),
+				id: dt.string,
+				name: dt.union(dt.string, dt.undefined_),
+				age: dt.optional(dt.array(dt.number)),
 			},
 			true
 		)
-		assert.equal(d.is({ a: 1 }), true)
-		assert.equal(d.is({ a: 1, b: "hello" }), true)
-		assert.equal(d.is({ a: 1, b: "hello", c: "ignore" }), false)
+
+		// Fails because strict.
+		assert.equal(d.is({ id: "1" }), false)
+		assert.equal(d.is({ id: "1", name: "hello", c: "ignore" }), false)
 		assert.equal(
-			dt.formatError(d.validate({ a: 1, b: "hello", c: "ignore" })!),
-			`{"a":1,"b":"hello","c":"ignore"} contains extra keys: "c"`
+			dt.formatError(d.validate({ id: "1", name: "hello", c: "ignore" })!),
+			`{"id":"1","name":"hello","c":"ignore"} contains extra keys: "c"`
 		)
+		assert.equal(
+			dt.formatError(d.validate({ id: "1" })!),
+			`.name: "name" is missing from {"id":"1"}`
+		)
+
+		// Other stuff passes normally.
+		assert.equal(d.is({ id: "1", name: "c" }), true)
+		assert.equal(d.is({ id: "1", name: undefined }), true)
+		assert.equal(d.is({ id: "1", name: undefined, age: [] }), true)
+		assert.equal(d.is({ id: "1", name: undefined, age: undefined }), true)
+		assert.equal(d.is({ id: "1", name: "hello", age: [12, 23] }), true)
 	})
 
 	it("any", () => {
@@ -230,17 +323,24 @@ describe("data-type-ts", () => {
 	})
 
 	it("conforms", () => {
+		// The goal here is to write types with TypeScript and write validators separately.
+		// That means, you're not defining your types
 		type User = {
 			id: string
 			name: string
 			age?: number[]
 		}
 
-		const userType = dt.object<User>({
+		const userType = dt.object({
 			id: dt.string,
 			name: dt.string,
 			age: dt.array(dt.number),
 			// age: dt.optional(dt.array(dt.number)),
 		})
+
+		// const stringArray = dt.array<string>(dt.string)
+		// literal
+		// tuple
+		// map
 	})
 })
