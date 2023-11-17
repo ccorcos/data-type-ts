@@ -1,6 +1,4 @@
-# Data Types for TypeScript
-
-Runtime validators with TypeScript.
+# Runtime Data Types for TypeScript
 
 ## Getting Started
 
@@ -11,83 +9,98 @@ npm install --save data-type-ts
 You can define types at runtime that are correctly inferred by TypeScript.
 
 ```ts
-import * as dt from "data-type-ts"
+const schema = t.object({
+	id: t.string,
+	role: t.union(t.literal("admin"), t.literal("member")),
+	settings: t.map(t.boolean),
+	friends: t.array(t.string),
+	rest: t.tuple(t.number, t.string, t.null_, t.undefined_, t.any),
+	age: t.optional(t.number),
+})
 
-// Define runtime validator.
-const response = dt.union(
-	dt.object({
-		type: dt.literal("loading"),
-	}),
-	dt.object({
-		type: dt.literal("ready"),
-		result: dt.number,
-	})
-)
-// const response: dt.Validator<
-// 	| {
-// 			type: "loading"
-// 	  }
-// 	| {
-// 			type: "ready"
-// 			result: number
-// 	  }
-// >
-
-// You can extract the type:
-type Response = typeof response.value
-// type Response =
-// 	| {
-// 			type: "loading"
-// 	  }
-// 	| {
-// 			type: "ready"
-// 			result: number
-// 	  }
+type Schema = (typeof schema)["value"]
+// type Schema = {
+// 	id: string
+// 	role: "admin" | "member"
+// 	settings: {
+// 		[key: string]: boolean
+// 	}
+// 	friends: string[]
+// 	rest: [number, string, null, undefined, any]
+// 	age?: number | undefined
+// }
 ```
 
-Then you can use this for runtime validation:
+You can validate values with useful error messages:
 
 ```ts
-response.is({ type: "ready", result: 12 })
+schema.is({
+	id: "",
+	role: "admin",
+	settings: {},
+	friends: [],
+	rest: [1, "", null, undefined, {}],
+})
 // true
 
-response.is({ type: "ready" })
-// false
+t.formatError(
+	schema.validate({
+		id: "",
+		role: "editor",
+		settings: {},
+		friends: [],
+		rest: [1, "", null, undefined, {}],
+	})!
+)
+// .role: "editor" must satisfy one of:
+// 	"editor" is not "admin"
+// 	"editor" is not "member"
 ```
 
-Use can also generate user-friendly errors.
+If you prefer to define your types normally and only use this library for validation, you can still get typesafety this way:
 
 ```ts
-response.validate({ type: "ready", result: 12 })
-// undefined
+type Schema = {
+	id: string
+	role: "admin" | "member"
+	settings: {
+		[key: string]: boolean
+	}
+	friends: string[]
+	rest: [number, string, null, undefined, any]
+	age?: number | undefined
+}
 
-dt.formatError(response.validate({ type: "ready" }))
-// {"type":"ready"} must satisfy one of:
-//   .type: "ready" is not "loading"
-//   .result: undefined is not a number
+// Type conformation:
+const schema: t.Validator<Schema> = t.object({
+	id: t.string,
+	role: t.union(
+		t.literal("admin"),
+		t.literal("member"),
+		t.literal("editor") // This should make an error.
+	),
+	settings: t.map(t.boolean),
+	friends: t.array(t.string),
+	rest: t.tuple(t.number, t.string, t.null_, t.undefined_, t.any),
+	age: t.optional(t.number),
+})
 ```
 
-You can also inspect the validator which is convenient for debugging:
+There are two gotchas with this approach though:
 
-```ts
-response.toString()
-// { type: "loading" } | { type: "ready"; result: number }
-```
+1. The type errors are pretty hard to interpret when things aren't lined up.
+2. This approach does not catch missing optional types for fundamental TypeScript reasons.
 
-For validating objects, you can pass a second argument "strict" if you want to error when there are extra keys.
-
-```ts
-const d = dt.object({
-	a: dt.number,
-	b: dt.optional(dt.string),
-}, true)
-
-d.is({ a: 1, b: "hello", c: "extra" })
-// false
-
-dt.formatError(d.validate({ a: 1, b: "hello", c: "extra" }))
-// `{"a":1,"b":"hello","c":"extra"} contains extra keys: "c"`
-```
+		```ts
+		const schema: t.Validator<Schema>  = t.object({
+			id: t.string,
+			role: t.union(t.literal("admin"), t.literal("member")),
+			settings: t.map(t.boolean),
+			friends: t.array(t.string),
+			rest: t.tuple(t.number, t.string, t.null_, t.undefined_, t.any),
+			// age: t.optional(t.number), // This should throw and error but it doesnt!
+		})
+		```
 
 ## Custom Types
 
