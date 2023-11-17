@@ -89,4 +89,36 @@ dt.formatError(d.validate({ a: 1, b: "hello", c: "extra" }))
 // `{"a":1,"b":"hello","c":"extra"} contains extra keys: "c"`
 ```
 
-You can also create your own custom validators.
+## Custom Types
+
+This library is only meant to support the most basic JSON types. But you can extend this for your own validators as well.
+
+```ts
+import * as emailValidator from "email-validator"
+
+export const email = new Validator<string>({
+	validate: value => {
+		const invalidString = string.validate(value)
+		if (invalidString) return invalidString
+
+		const validEmail = emailValidator.validate(email)
+		if (!validEmail)
+			return {
+				message: `${JSON.stringify(value)} is not valid email`,
+				path: [],
+			}
+	},
+	inspect: () => "Email",
+})
+```
+
+## Using for Validation only
+
+Personally, I find it kind of gross to construct types using a runtime wrapper like this. Not to mention, there's all kinds of basic validation that you might want to keep our of your types to keep them clean.
+
+So if you're just using for validation, you can pass the types into your schema in order to assert that your schema conforms to the type.
+
+```ts
+
+
+```

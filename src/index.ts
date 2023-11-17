@@ -184,7 +184,7 @@ export function map<T>(inner: Validator<T>) {
 
 export function object<T extends object>(
 	args: {
-		[K in keyof T]: Validator<T[K]>
+		[K in keyof Required<T>]: Validator<T[K]>
 	},
 	strict = false
 ) {

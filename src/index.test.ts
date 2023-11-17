@@ -228,4 +228,19 @@ describe("data-type-ts", () => {
 			].join("\n")
 		)
 	})
+
+	it("conforms", () => {
+		type User = {
+			id: string
+			name: string
+			age?: number[]
+		}
+
+		const userType = dt.object<User>({
+			id: dt.string,
+			name: dt.string,
+			age: dt.array(dt.number),
+			// age: dt.optional(dt.array(dt.number)),
+		})
+	})
 })
