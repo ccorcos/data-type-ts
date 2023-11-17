@@ -16,8 +16,8 @@ whats left?
 -[x] tuple
 -[x] map
 -[x] object
--[ ] any
--[ ] union
+-[x] any
+-[x] union
 
 - later on, we could being back schema serialization. totally possible.
 

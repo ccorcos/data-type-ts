@@ -269,7 +269,11 @@ describe("data-type-ts", () => {
 		assert.equal(d.is({}), true)
 		assert.equal(d.is([]), true)
 		assert.equal(d.toString(), "any")
+
 		type a1 = Assert<typeof d.value, any>
+		const v1: dt.Validator<any> = dt.any
+		// NOTE: this is a weird exception here about any...
+		const v2: dt.Validator<any> = dt.number
 	})
 
 	it("union simple", () => {
@@ -278,7 +282,20 @@ describe("data-type-ts", () => {
 		assert.equal(d.is("hello"), true)
 		assert.equal(d.is({}), false)
 		assert.equal(d.toString(), "number | string")
-		type a1 = Assert<typeof d.value, number | string>
+
+		type a1 = Assert<typeof d.value, number | string> // Infers
+
+		// Conforms
+		const v1: dt.Validator<string | number> = dt.union(dt.number, dt.string)
+		// @ts-expect-error
+		const v2: dt.Validator<string | number> = dt.union(dt.string)
+		// @ts-expect-error
+		const v3: dt.Validator<string | number> = dt.union(
+			dt.number,
+			dt.string,
+			dt.boolean
+		)
+
 		assert.equal(
 			dt.formatError(d.validate({})!),
 			[
@@ -320,27 +337,5 @@ describe("data-type-ts", () => {
 				"  .result: undefined is not a number",
 			].join("\n")
 		)
-	})
-
-	it("conforms", () => {
-		// The goal here is to write types with TypeScript and write validators separately.
-		// That means, you're not defining your types
-		type User = {
-			id: string
-			name: string
-			age?: number[]
-		}
-
-		const userType = dt.object({
-			id: dt.string,
-			name: dt.string,
-			age: dt.array(dt.number),
-			// age: dt.optional(dt.array(dt.number)),
-		})
-
-		// const stringArray = dt.array<string>(dt.string)
-		// literal
-		// tuple
-		// map
 	})
 })
