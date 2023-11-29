@@ -25,7 +25,7 @@ type ValidatorFn<T> = {
 export class Validator<T> implements ValidatorFn<T> {
 	constructor(args: {
 		validate: (value: T) => ValidateError | undefined
-		inspect: () => string
+		inspect?: () => string
 	}) {
 		this.validate = args.validate as any
 		this._validate = args.validate
@@ -33,10 +33,10 @@ export class Validator<T> implements ValidatorFn<T> {
 	}
 	public _validate: (value: T) => ValidateError | undefined
 	public validate: (value: unknown) => ValidateError | undefined
-	public inspect: () => string
+	public inspect: undefined | (() => string)
 
 	toString() {
-		return this.inspect()
+		return this.inspect?.() || "[Validator]"
 	}
 
 	public is(value: unknown): value is T {
@@ -125,7 +125,7 @@ export function array<T>(inner: Validator<T>) {
 				}
 			}
 		},
-		inspect: () => "Array<" + inner.inspect() + ">",
+		inspect: () => "Array<" + inner.toString() + ">",
 	})
 }
 
@@ -148,7 +148,7 @@ export function tuple<T extends Array<any>>(
 				}
 			}
 		},
-		inspect: () => "[" + values.map(v => v.inspect()).join(", ") + "]",
+		inspect: () => "[" + values.map(v => v.toString()).join(", ") + "]",
 	})
 }
 
@@ -165,7 +165,7 @@ export function map<T>(inner: Validator<T>): Validator<{ [key: string]: T }> {
 				}
 			}
 		},
-		inspect: () => "{ [key: string]: " + inner.inspect() + " }",
+		inspect: () => "{ [key: string]: " + inner.toString() + " }",
 	})
 }
 
@@ -191,7 +191,7 @@ class Optional<T> extends Validator<T> {
 		const x = union(inner, undefined_)
 		super({
 			validate: value => x.validate(value),
-			inspect: () => x.inspect(),
+			inspect: () => x.toString(),
 		})
 	}
 }
@@ -261,8 +261,8 @@ export function object<
 			[
 				...Object.keys(args).map(key => {
 					const inner = args[key]
-					if ("optional" in inner) return key + ":? " + args[key].inspect()
-					else return key + ": " + args[key].inspect()
+					if ("optional" in inner) return key + ":? " + args[key].toString()
+					else return key + ": " + args[key].toString()
 				}),
 			].join("; ") +
 			" }",
@@ -292,7 +292,7 @@ export function union<T extends Validator<any>[]>(...values: T) {
 				}
 			}
 		},
-		inspect: () => values.map(v => v.inspect()).join(" | "),
+		inspect: () => values.map(v => v.toString()).join(" | "),
 	})
 }
 

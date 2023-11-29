@@ -119,10 +119,6 @@ function range(min: number, max: number) {
 	})
 }
 
-const d = range(0, 10)
-```
-
-```ts
 import * as emailValidator from "email-validator"
 
 export const email = new t.Validator<string>({
@@ -132,11 +128,6 @@ export const email = new t.Validator<string>({
 			: undefined,
 	inspect: () => "Email",
 })
-```
-
-Note that the inspect argument is helpful when debugging.
-
-```ts
 
 const schema = t.object({
 	id: t.string,
@@ -151,3 +142,5 @@ console.log(schema.toString())
 // 	score: 0 >= number >= 10
 // }
 ```
+
+Note that the `inspect` argument is optional but it's is helpful for debugging.
