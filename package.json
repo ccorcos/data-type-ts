@@ -1,6 +1,6 @@
 {
 	"name": "data-type-ts",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "Runtime typed data validation for TypeScript.",
 	"main": "build/index.js",
 	"scripts": {
