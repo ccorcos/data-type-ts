@@ -91,16 +91,16 @@ There are two gotchas with this approach though:
 1. The type errors are pretty hard to interpret when things aren't lined up.
 2. This approach does not catch missing optional types for fundamental TypeScript reasons.
 
-		```ts
-		const schema: t.Validator<Schema>  = t.object({
-			id: t.string,
-			role: t.union(t.literal("admin"), t.literal("member")),
-			settings: t.map(t.boolean),
-			friends: t.array(t.string),
-			rest: t.tuple(t.number, t.string, t.null_, t.undefined_, t.any),
-			// age: t.optional(t.number), // This should throw and error but it doesnt!
-		})
-		```
+	```ts
+	const schema: t.Validator<Schema>  = t.object({
+		id: t.string,
+		role: t.union(t.literal("admin"), t.literal("member")),
+		settings: t.map(t.boolean),
+		friends: t.array(t.string),
+		rest: t.tuple(t.number, t.string, t.null_, t.undefined_, t.any),
+		// age: t.optional(t.number), // This should throw and error but it doesnt!
+	})
+	```
 
 ## Custom Types
 
